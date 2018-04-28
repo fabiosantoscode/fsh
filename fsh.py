@@ -21,14 +21,25 @@ def parse_statement(tokens):
     func = tokens[-1]
     tokens.remove(func)
 
-    args = []
+    while tokens and re.match(r'\s+|[{}]', func):
+        func = tokens[-1]
+        tokens.remove(func)
 
-    while tokens and tokens[-1] != '\n':
-        if not re.match(r'\s+', tokens[-1]):
-            args.append(tokens[-1])
-        tokens.remove(tokens[-1])
+    def parse_until(end='\n'):
+        while tokens and tokens[-1] != end:
+            if tokens[-1] != '{' and not re.match(r'\s+', tokens[-1]):
+                yield tokens[-1]
+            tokens.remove(tokens[-1])
 
-    if args and args[0] == '=':
+    args = list(parse_until())
+
+    print(func, args)
+
+    if func == 'function':
+        body = parse_statement(tokens)
+        print('body', body)
+        return Function(args[0], [], body)
+    elif args and args[0] == '=':
         return SetVariable(func.replace('$', ''), args[1])
 
     return Statement(func, args)
